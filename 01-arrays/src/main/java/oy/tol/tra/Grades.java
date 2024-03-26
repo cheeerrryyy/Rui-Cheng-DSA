@@ -23,26 +23,14 @@ public class Grades {
     * The method to reverse the internal Java int array.
     */
    public void reverse() {
-      for (int i = 0;i < grades.length/2;i++) {
-         int temp = grades[i];
-         grades[i] = grades[grades.length-i-1];
-         grades[grades.length-i-1] = temp;
-     }
+      Algorithms.reverse(grades);  
    }
 
    /**
     * Sorts the array to ascending order.
     */
    public void sort() {
-      for (int i = 0;i < grades.length-1;i++) {
-         for (int j = 0; j < grades.length-1-i;j++){
-         if (grades[j] > grades[j+1]) {
-            int tmp = grades[j];
-            grades[j] = grades[j+1];
-            grades[j+1] = tmp;
-           }
-         }
-      }
+      Algorithms.sort(grades);  
    }
 
    /**
