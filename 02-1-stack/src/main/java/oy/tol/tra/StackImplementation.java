@@ -21,9 +21,18 @@ public class StackImplementation<E> implements StackInterface<E> {
     * @throws StackAllocationException If cannot allocate room for the internal array.
     */
    public StackImplementation(int capacity) throws StackAllocationException {
-      this.capacity = capacity;
-      itemArray = new Object[capacity];
-   }
+      try {  
+         if (capacity < 2) {  
+             throw new StackAllocationException("Size cannot be less than 2.");  
+         }  
+         this.capacity = capacity;  
+         itemArray = new Object[capacity];  
+         this.currentIndex = -1;  
+     } catch (OutOfMemoryError e) {  
+         throw new StackAllocationException("Failed to allocate memory for the stack.", e);  
+     }  
+ }  
+   
 
    @Override
    public int capacity() {
@@ -50,13 +59,15 @@ public class StackImplementation<E> implements StackInterface<E> {
 
    @SuppressWarnings("unchecked")
    @Override
-   public E pop() throws StackIsEmptyException {
-      if (currentIndex == -1) {
-         throw new StackIsEmptyException("Null");
-      } else {
-         return (E) itemArray[currentIndex--];
-      }
-   }
+   public E pop() throws StackIsEmptyException {  
+      if (currentIndex == -1) {  
+          throw new StackIsEmptyException("Stack is empty");  
+      } else {  
+          E item = (E) itemArray[currentIndex];  
+          itemArray[currentIndex--] = null; 
+          return item;  
+      }  
+  }
 
    @SuppressWarnings("unchecked")
    @Override

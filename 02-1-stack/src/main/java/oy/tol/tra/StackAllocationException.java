@@ -14,5 +14,10 @@ public class StackAllocationException extends RuntimeException {
     */
    public StackAllocationException(String message) {
       super(message);
-   } 
+   }
+
+   public StackAllocationException(String message, Throwable cause) {  
+      super(message, cause);  
+  }  
 }
+
