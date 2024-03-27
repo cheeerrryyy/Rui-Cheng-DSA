@@ -9,5 +9,9 @@ public class QueueAllocationException extends RuntimeException {
    */
    public QueueAllocationException(String message) {
       super(message);
-   }   
+   }
+
+   public QueueAllocationException(String message, Throwable cause) {  
+      super(message, cause);  
+  }     
 }

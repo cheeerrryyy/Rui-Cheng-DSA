@@ -16,10 +16,17 @@ public class QueueImplementation<E> implements QueueInterface<E> {
    }
 
    public QueueImplementation(int capacity) throws QueueAllocationException {
-      this.capacity = capacity;
-      itemArray = new Object[capacity];
-      front = 0;
-      rear = 0;
+      try {  
+         if (capacity < 2) {  
+             throw new QueueAllocationException("Queue size cannot be less than 2.");  
+         }  
+         this.capacity = capacity;    
+         itemArray = new Object[capacity];  
+         front = 0;  
+         rear = 0;  
+     } catch (OutOfMemoryError e) {  
+         throw new QueueAllocationException("Failed to allocate memory for the queue.", e);  
+     }  
    }
 
    @Override
@@ -56,9 +63,10 @@ public class QueueImplementation<E> implements QueueInterface<E> {
       if (front == rear) {
          throw new QueueIsEmptyException("It is null");
       } else {
-         E value = (E) itemArray[front];
-         front = (front + 1) % capacity;
-         return value;
+         E value = (E) itemArray[front];  
+         itemArray[front] = null; 
+         front = (front + 1) % capacity;  
+         return value; 
       }
    }
 
