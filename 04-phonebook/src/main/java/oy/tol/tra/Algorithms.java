@@ -1,7 +1,7 @@
 package oy.tol.tra;
 
 import java.util.function.Predicate;
-import java.util.Arrays;
+import java.util.Comparator;
 
 public class Algorithms<K extends Comparable<K>, V, T> {
 
@@ -42,37 +42,39 @@ public class Algorithms<K extends Comparable<K>, V, T> {
 
     public static <K extends Comparable<K>, V> void fastSort(Pair<K, V>[] array) {
         @SuppressWarnings("unchecked")
-        Pair<K, V>[] temp = (Pair<K, V>[]) new Pair[array.length];  
-        quickSort(array, temp, 0, array.length - 1); 
+        Pair<K, V>[] temp = (Pair<K, V>[]) new Pair[array.length];
+        quickSort(array, temp, 0, array.length - 1);
     }
 
-    private static <K extends Comparable<K>, V> void quickSort(Pair<K, V>[] array, Pair<K, V>[] temp, int left, int right) {
-        if (left < right) {  
-            int mid = left + (right - left) / 2;   
-            quickSort(array, temp, left, mid); 
-            quickSort(array, temp, mid + 1, right);  
-            partition(array, temp, left, mid, right);  
-        }  
+    private static <K extends Comparable<K>, V> void quickSort(Pair<K, V>[] array, Pair<K, V>[] temp, int left,
+            int right) {
+        if (left < right) {
+            int mid = left + (right - left) / 2;
+            quickSort(array, temp, left, mid);
+            quickSort(array, temp, mid + 1, right);
+            partition(array, temp, left, mid, right);
+        }
     }
 
-    private static <K extends Comparable<K>, V> void partition(Pair<K, V>[] array, Pair<K, V>[] temp, int left, int mid, int right) {
-        int i = left, j = mid + 1, k = left;  
-        while (i <= mid && j <= right) {  
-            if (array[i].getKey().compareTo(array[j].getKey()) <= 0) {  
-                temp[k++] = array[i++];  
-            } else {  
-                temp[k++] = array[j++];  
-            }  
-        }  
-        while (i <= mid) {  
-            temp[k++] = array[i++];  
-        }  
-        while (j <= right) {  
-            temp[k++] = array[j++];  
-        }    
-        for (i = left; i <= right; i++) {  
-            array[i] = temp[i];  
-        }  
+    private static <K extends Comparable<K>, V> void partition(Pair<K, V>[] array, Pair<K, V>[] temp, int left, int mid,
+            int right) {
+        int i = left, j = mid + 1, k = left;
+        while (i <= mid && j <= right) {
+            if (array[i].getKey().compareTo(array[j].getKey()) <= 0) {
+                temp[k++] = array[i++];
+            } else {
+                temp[k++] = array[j++];
+            }
+        }
+        while (i <= mid) {
+            temp[k++] = array[i++];
+        }
+        while (j <= right) {
+            temp[k++] = array[j++];
+        }
+        for (i = left; i <= right; i++) {
+            array[i] = temp[i];
+        }
     }
 
     public T[] getArray() {
@@ -108,12 +110,29 @@ public class Algorithms<K extends Comparable<K>, V, T> {
         return index;
     }
 
-    public static void sortWithComparator(Person[] array, DescendingPersonComparator descendingPersonComparator) {
-        Arrays.sort(array, descendingPersonComparator);
+    public static <T> void sortWithComparator(T[] array, Comparator<T> comparator) {
+        fastSortWithComparator(array, comparator, 0, array.length - 1);
     }
 
-    public static void sortWithComparator(Person[] array, AscendingPersonComparator ascendingPersonComparator) {
-        Arrays.sort(array, ascendingPersonComparator);
+    private static <T> void fastSortWithComparator(T[] array, Comparator<T> comparator, int left, int right) {
+        if (left < right) {
+            int pivotIndex = partitionWithComparator(array, comparator, left, right);
+            fastSortWithComparator(array, comparator, left, pivotIndex - 1);
+            fastSortWithComparator(array, comparator, pivotIndex + 1, right);
+        }
+    }
+
+    private static <T> int partitionWithComparator(T[] array, Comparator<T> comparator, int left, int right) {
+        T pivot = array[right];
+        int i = left - 1;
+        for (int j = left; j < right; j++) {
+            if (comparator.compare(array[j], pivot) <= 0) {
+                i++;
+                swap(array, i, j);
+            }
+        }
+        swap(array, i + 1, right);
+        return i + 1;
     }
 
 }
