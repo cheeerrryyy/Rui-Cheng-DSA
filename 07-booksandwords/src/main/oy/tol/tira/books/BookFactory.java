@@ -15,9 +15,6 @@ public final class BookFactory {
      * @return Your implementation of the Book interface.
      */
     public static Book createBook() {
-        // return null;
-        //return new HashTableBookImplementation();
-        //return new BSTBookImplementation();
-        return new BSTBookImplementationCountSort();
+        return new BadBookImplementation();
     }
 }
