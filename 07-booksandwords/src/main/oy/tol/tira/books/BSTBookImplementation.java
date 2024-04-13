@@ -8,11 +8,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 public class BSTBookImplementation implements Book {
+    private class TreeNode {
+        TreeNode(String word) {
+            this.word = word;
+            this.count = 1;
+        }
+        String word;
+        int count;
+        TreeNode left, right;
+    }
 
-    private static final int MAX_WORDS = 100000;
-    private static final int MAX_WORD_LEN = 100;
-    KeyValueBSearchTree<String, Integer> words = null;
-    Pair<String,Integer>[] sorted;
+    private TreeNode root = null;
+    private TreeNode[] nodes;
     private String bookFile = null;
     private String wordsToIgnoreFile = null;
     private WordFilter filter = null;
@@ -45,87 +52,139 @@ public class BSTBookImplementation implements Book {
         totalWordCount = 0;
         loopCount = 0;
         ignoredWordsTotal = 0;
-        words = new KeyValueBSearchTree<>();
+        root = null;
+
         filter = new WordFilter();
         filter.readFile(wordsToIgnoreFile);
-
-        FileReader reader = new FileReader(bookFile, StandardCharsets.UTF_8);
-        int c;
-        int[] array = new int[MAX_WORD_LEN];
-        int currentIndex = 0;
-        while ((c = reader.read()) != -1) {
-            if (Character.isLetter(c)) {
-                array[currentIndex] = c;
-                currentIndex++;
-            } else {
-                if (currentIndex > 0) {
-                    String word = new String(array, 0, currentIndex).toLowerCase(Locale.ROOT);
-                    currentIndex = 0;
-                    addToWords(word);
+        
+        try(FileReader reader = new FileReader(bookFile, StandardCharsets.UTF_8)){
+            int c;
+            StringBuilder wordBuilder = new StringBuilder();
+            while ((c = reader.read()) != -1) {
+                if (Character.isLetter(c)) {
+                    wordBuilder.append((char) c);
+                } else if(wordBuilder.length() > 0){
+                    String word = wordBuilder.toString().toLowerCase(Locale.ROOT);
+                    if (!filter.shouldFilter(word) && word.length() >= 2) {
+                        root = addToTree(root, word);
+                        totalWordCount++;
+                    } else {
+                        ignoredWordsTotal++;
+                    }
+                    wordBuilder.setLength(0);
+                }
+            }
+            if (wordBuilder.length() > 0) {
+                String word = wordBuilder.toString().toLowerCase(Locale.ROOT);
+                if (!filter.shouldFilter(word) && word.length() >= 2) {
+                    root = addToTree(root, word);
+                    totalWordCount++;
+                } else {
+                    ignoredWordsTotal++;
                 }
             }
         }
-        if (currentIndex > 1) {
-            String word = new String(array, 0, currentIndex).toLowerCase(Locale.ROOT);
-            addToWords(word);
-        }
-        reader.close();
     }
 
-    private void addToWords(String word) {
-        if (!filter.shouldFilter(word) && word.length() >= 2) {
-            if (words.size()==0){
-                words.add(word,1);
-                uniqueWordCount+=1;
-                totalWordCount+=1;
-                return;
-            }
-            Integer currentCount = 0;
-            if (words.find(word)==null){
-                currentCount = 1;
-                uniqueWordCount += 1;
-            }else {
-                currentCount = words.find(word)+1;
-            }
-            words.add(word,currentCount);
-            totalWordCount += 1;
-        } else {
-            ignoredWordsTotal++;
+    private TreeNode addToTree(TreeNode node, String word) {
+        if (node == null) {
+            uniqueWordCount++;
+            return new TreeNode(word);
         }
-
+        int compare = word.compareTo(node.word);  
+        if (compare < 0) {  
+            node.left = addToTree(node.left, word);  
+        } else if (compare > 0) {  
+            node.right = addToTree(node.right, word); 
+        } else {  
+            node.count++;  
+        }  
+        return node;
     }
 
     @Override
     public void report() {
-        if (words.size() == 0) {
+        if (root == null) {
             System.out.println("*** No words to report! ***");
             return;
         }
         System.out.println("Listing words from a file: " + bookFile);
         System.out.println("Ignoring words from a file: " + wordsToIgnoreFile);
         System.out.println("Sorting the results...");
-        sorted = words.toSortedArray();
-        Algorithms.reverse(sorted);
+
+        nodes = new TreeNode[uniqueWordCount];
+        int filledSize = fillArray(root, nodes, 0);
+
+        heapSort(nodes);
         System.out.println("...sorted.");
 
-        for (int index = 0; index < 100 && index<sorted.length; index++) {
-            String word = String.format("%-20s",sorted[index].getKey()).replace(' ', '.');
-            System.out.format("%4d. %s %6d%n", index + 1, word, sorted[index].getValue());
+        for (int i = 0; i < filledSize; i++) {
+            System.out.println(nodes[i].word + ": " + nodes[i].count);
         }
+        System.out.println("The depth of the BST: " + maxDepth(root));
         System.out.println("Count of words in total: " + totalWordCount);
         System.out.println("Count of unique words:    " + uniqueWordCount);
         System.out.println("Count of words to ignore:    " + filter.ignoreWordCount());
         System.out.println("Ignored words count:      " + ignoredWordsTotal);
-        System.out.println("How many times the inner loop rolled: " + loopCount);
         System.out.println("\nInformation for BST implementation");
-        System.out.println(words.getStatus());
+    }
+
+    private int fillArray(TreeNode node, TreeNode[] array, int index) {
+        if (node == null) {
+            return index;
+        }
+        index = fillArray(node.left, array, index);
+        array[index++] = node;
+        return fillArray(node.right, array, index);
+    }
+
+    private void heapSort(TreeNode[] array) {
+        int n = array.length;
+        for (int i = n / 2 - 1; i >= 0; i--) {
+            heapify(array, n, i);
+        }
+        for (int i = n - 1; i > 0; i--) {
+            TreeNode temp = array[0];
+            array[0] = array[i];
+            array[i] = temp;
+            heapify(array, i, 0);
+        }
+    }
+
+    private void heapify(TreeNode[] array, int n, int i) {
+        int max = i;
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        if (left < n && array[left].count < array[max].count) {
+            max = left;
+        }
+        if (right < n && array[right].count < array[max].count) {
+            max = right;
+        }
+        if (max != i) {
+            TreeNode temp = array[i];
+            array[i] = array[max];
+            array[max] = temp;
+            heapify(array, n, max);
+        }
+    }
+
+    private int maxDepth(TreeNode node) {
+        if (node == null) {
+            return 0;
+        } else {
+            int leftDepth = maxDepth(node.left);
+            int rightDepth = maxDepth(node.right);
+            return Math.max(leftDepth, rightDepth) + 1;
+        }
     }
 
     @Override
     public void close() {
         bookFile = null;
         wordsToIgnoreFile = null;
-        words = null;
+        root = null;
         if (filter != null) {
             filter.close();
         }
@@ -144,16 +203,16 @@ public class BSTBookImplementation implements Book {
 
     @Override
     public String getWordInListAt(int position) {
-        if (sorted != null && position >= 0 && position < uniqueWordCount) {
-            return sorted[position].getKey();
+        if (nodes != null && position >= 0 && position < uniqueWordCount) {
+            return nodes[position].word;
         }
         return null;
     }
 
     @Override
     public int getWordCountInListAt(int position) {
-        if (sorted != null && position >= 0 && position < uniqueWordCount) {
-            return sorted[position].getValue();
+        if (nodes != null && position >= 0 && position < uniqueWordCount) {
+            return nodes[position].count;
         }
         return -1;
     }
@@ -167,4 +226,5 @@ public class BSTBookImplementation implements Book {
         }
         return false;
     }
+
 }
